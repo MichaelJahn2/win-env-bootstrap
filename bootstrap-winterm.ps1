@@ -1,7 +1,8 @@
+winget install JanDeDobbeleer.OhMyPosh
+
 #setup a temp dir to download some files like Hack font
 $winEnvBootstrapPath = Resolve-Path .
 $hackNerdFontURL = "https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Hack.zip"
-$fontTargetDir = "$env:localappdata\Microsoft\Windows\Fonts"
 $tempFolderPath = Join-Path $Env:Temp $(New-Guid)
 
 New-Item -Type Directory -Path $tempFolderPath | Out-Null
@@ -23,22 +24,16 @@ Invoke-WebRequest -Uri "$hackNerdFontURL" -OutFile "$tempFolderPath\hack.zip"
 Write-Host "Extracting Hack Nerd Font files to $tempFolderPath"
 Expand-Archive -LiteralPath "$tempFolderPath\hack.zip" -DestinationPath "$tempFolderPath"
 
-
-Write-Host "Copying the windows hack nerd font files to user font dir $env:localappdata\Microsoft\Windows\Fonts"
-Write-Host "This requires Win10 17704 upwards to work"
-#Move-Item "$tempFolderPath\*Windows*.ttf" -Destination "$env:localappdata\Microsoft\Windows\Fonts" -Force
-
-
 # taken from Mick IT Blog 
 # article: https://mickitblog.blogspot.com/2021/06/powershell-install-fonts.html
 # github repo: https://github.com/MicksITBlogs/PowerShell/blob/master/InstallFonts.ps1
 # adapted to not require admin priviledges
 # requires win10 17704 upwards: https://superuser.com/questions/118025/using-custom-fonts-without-administrator-rights
-
 function Install-Font {
 	param
 	(
-		[Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][System.IO.FileInfo]$FontFile
+		[Parameter(Mandatory)][ValidateNotNullOrEmpty()][System.IO.FileInfo]$FontFile,
+		[Parameter(Mandatory)][Boolean]$InstallSystemWide
 	)
 	
 	#Get Font Name from the File's Extended Attributes
@@ -51,54 +46,58 @@ function Install-Font {
 			".ttf" {$FontName = $FontName + [char]32 + '(TrueType)'}
 			".otf" {$FontName = $FontName + [char]32 + '(OpenType)'}
 		}
-		$Copy = $true
-		Write-Host ('Copying' + [char]32 + $FontFile.Name + '.....') -NoNewline
-		Copy-Item -Path $fontFile.FullName -Destination ("$fontTargetDir\" + $FontFile.Name) -Force
-		#Test if font is copied over
-		If ((Test-Path ("$fontTargetDir\" + $FontFile.Name)) -eq $true) {
+		if ($InstallSystemWide) {
+				$fontTarget = $env:windir + "\Fonts\" + $FontFile.Name
+				$regPath = "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
+				$regValue = $FontFile.Name
+				$regName = $FontName
+		} else {
+				# Check whether Windows Version is high enough to support per-user font installation without admin rights
+				$winMajorVersion = [Environment]::OSVersion.Version.Major
+				$winBuild = [Environment]::OSVersion.Version.Build
+				If ( -not (($winMajorVersion -ge 10) -and ($winBuild -ge 17044))) {
+					throw "At least Windows 10 Build 17044 is required for local user installation. You have Win $winMajorVersion Build $winBuild."
+				}
+				$fontTarget = $env:localappdata + "\Microsoft\Windows\Fonts\" + $FontFile.Name
+				$regPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
+				$regValue = $fontTarget
+				$regName = $FontName
+		}
+
+		$CopyFailed = $true
+		Write-Host ("Copying $($FontFile.Name).....") -NoNewline
+		Copy-Item -Path $fontFile.FullName -Destination ($fontTarget) -Force
+		# Test if font is copied over
+		If ((Test-Path ($fontTarget)) -eq $true) {
 			Write-Host ('Success') -Foreground Yellow
 		} else {
-			Write-Host ('Failed') -ForegroundColor Red
+			Write-Host ('Failed to copy file') -ForegroundColor Red
 		}
-		$Copy = $false
-		#Test if font registry entry exists
-		If ((Get-ItemProperty -Name $FontName -Path "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -ErrorAction SilentlyContinue) -ne $null) {
-			#Test if the entry matches the font file name
-			If ((Get-ItemPropertyValue -Name $FontName -Path "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts") -eq "$fontTargetDir\$FontFile.Name") {
-				Write-Host ('Adding' + [char]32 + $FontName + [char]32 + 'to the registry.....') -NoNewline
-				Write-Host ('Success') -ForegroundColor Yellow
-			} else {
-				$AddKey = $true
-				Remove-ItemProperty -Name $FontName -Path "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -Force
-				Write-Host ('Adding' + [char]32 + $FontName + [char]32 + 'to the registry.....') -NoNewline
-				New-ItemProperty -Name $FontName -Path "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value "$fontTargetDir\$FontFile.Name" -Force -ErrorAction SilentlyContinue | Out-Null
-				If ((Get-ItemPropertyValue -Name $FontName -Path "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts") -eq "$fontTargetDir\$FontFile.Name") {
-					Write-Host ('Success') -ForegroundColor Yellow
-				} else {
-					Write-Host ('Failed') -ForegroundColor Red
-				}
-				$AddKey = $false
-			}
+		$CopyFailed = $false
+
+		# Create Registry item for font
+		Write-Host ("Adding $FontName to the registry.....") -NoNewline
+		If (!(Test-Path $regPath)) {
+			New-Item -Path $regPath -Force | Out-Null
+		}
+		New-ItemProperty -Path $regPath -Name $regName -Value $regValue -PropertyType string -Force -ErrorAction SilentlyContinue| Out-Null
+
+		$AddKeyFailed = $true
+		If ((Get-ItemPropertyValue -Name $regName -Path $regPath) -eq $regValue) {
+			Write-Host ('Success') -ForegroundColor Yellow
 		} else {
-			$AddKey = $true
-			Write-Host ('Adding' + [char]32 + $FontName + [char]32 + 'to the registry.....') -NoNewline
-			New-ItemProperty -Name $FontName -Path "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value "$fontTargetDir\$FontFile.Name" -Force -ErrorAction SilentlyContinue | Out-Null
-			If ((Get-ItemPropertyValue -Name $FontName -Path "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts") -eq "$fontTargetDir\$FontFile.Name") {
-				Write-Host ('Success') -ForegroundColor Yellow
-			} else {
-				Write-Host ('Failed') -ForegroundColor Red
-			}
-			$AddKey = $false
+			Write-Host ('Failed to set registry key') -ForegroundColor Red
 		}
+		$AddKeyFailed = $false
 		
 	} catch {
-		If ($Copy -eq $true) {
-			Write-Host ('Failed') -ForegroundColor Red
-			$Copy = $false
+		If ($CopyFailed -eq $true) {
+			Write-Host ('Font file copy Failed') -ForegroundColor Red
+			$CopyFailed = $false
 		}
-		If ($AddKey -eq $true) {
-			Write-Host ('Failed') -ForegroundColor Red
-			$AddKey = $false
+		If ($AddKeyFailed -eq $true) {
+			Write-Host ('Registry Key Creation Failed') -ForegroundColor Red
+			$AddKeyFailed = $false
 		}
 		write-warning $_.exception.message
 	}
@@ -107,7 +106,8 @@ function Install-Font {
 
 #Get a list of all font files relative to this script and parse through the list
 foreach ($FontItem in (Get-ChildItem -Path $tempFolderPath | Where-Object {
-			($_.Name -like '*Windows*.ttf') 
+			($_.Name -like '*.ttf') -or ($_.Name -like '*.OTF')
 		})) {
-	Install-Font -FontFile $FontItem
+	Install-Font -FontFile $FontItem $false
 }
+
