@@ -62,6 +62,7 @@ function Install-Font {
 				$regPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
 				$regValue = $fontTarget + $FontFile.Name
 				$regName = $FontName
+				# The Fonts directory does not always exist on a per user level. Create it.
 				New-Item -ItemType Directory -Force -Path "$fontTarget"
 		}
 
