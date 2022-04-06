@@ -62,7 +62,7 @@ function Install-Font {
 				$regPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
 				$regValue = $fontTarget + $FontFile.Name
 				$regName = $FontName
-                New-Item -ItemType Directory -Force -Path "$fontTarget"
+				New-Item -ItemType Directory -Force -Path "$fontTarget"
 		}
 
 		$CopyFailed = $true
