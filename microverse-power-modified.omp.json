@@ -6,32 +6,28 @@
       "segments": [
         {
           "foreground": "#3A86FF",
-          "properties": {
-            "template": "{{ if .WSL }}WSL at {{ end }}{{.Icon}} "
-          },
           "style": "plain",
+          "template": "{{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
           "type": "os"
-        },
-        {
-          "background": "#242424",
-          "foreground": "cyan",
-          "powerline_symbol": "\ue0b0",
-          "properties": {
-            "template": "{{ if .Root }} <#f1184c>\uf0e7\uf0e7\uf0e7{{ end }} {{ .UserName }}{{ if .Root }} \uf0e7\uf0e7\uf0e7</> {{ end }}<darkGray>@</><#FFBB00>{{ .HostName }}</>"
-          },
-          "style": "powerline",
-          "type": "session"
         },
         {
           "background": "#242424",
           "foreground": "#33DD2D",
           "powerline_symbol": "\ue0b0",
           "properties": {
-            "style": "full",
-            "template": "\ue5ff {{ .Path }} "
+            "style": "full"
           },
           "style": "powerline",
+          "template": "\ue5ff {{ .Path }}",
           "type": "path"
+        },
+        {
+          "background": "#242424",
+          "foreground": "cyan",
+          "powerline_symbol": "\ue0b0",
+          "style": "powerline",
+          "template": "{{ if .Root }} <#f1184c>\uf0e7\uf0e7\uf0e7{{ end }}{{ .UserName }}{{ if .Root }} \uf0e7\uf0e7\uf0e7</> {{ end }}<darkGray>@</><#FFBB00>{{ .HostName }}</>",
+          "type": "session"
         },
         {
           "background": "#242424",
@@ -39,10 +35,10 @@
           "powerline_symbol": "\ue0b0",
           "properties": {
             "fetch_stash_count": true,
-            "fetch_upstream_icon": true,
-            "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} "
+            "fetch_upstream_icon": true
           },
           "style": "powerline",
+          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -53,33 +49,33 @@
           "foreground": "#242424",
           "powerline_symbol": "\ue0b0",
           "properties": {
-            "always_enabled": true,
-            "template": " \ufc8d "
+            "always_enabled": true
           },
           "style": "powerline",
+          "template": " \ufc8d ",
           "type": "exit"
-        },        
+        },
         {
           "background": "#242424",
           "foreground": "darkGray",
           "powerline_symbol": "\ue0b0",
           "properties": {
             "always_enabled": true,
-            "template": "\ufbab {{ .FormattedMs }}",
             "time_format": "15:04:05 2006-01-02"
           },
           "style": "powerline",
+          "template": "\ufbab {{ .FormattedMs }}",
           "type": "executiontime"
-	},
+        },
         {
           "background": "#242424",
           "foreground": "darkGray",
           "powerline_symbol": "\ue0b0",
           "properties": {
-            "template": "\uf64f {{ .CurrentDate | date .Format }} ",
             "time_format": "15:04:05 2006-01-02"
           },
           "style": "powerline",
+          "template": "\uf64f {{ .CurrentDate | date .Format }} ",
           "type": "time"
         }
       ],
@@ -91,15 +87,13 @@
       "segments": [
         {
           "foreground": "#f1184c",
-          "properties": {
-            "template": "# "
-          },
           "style": "plain",
+          "template": "# ",
           "type": "text"
         }
       ],
       "type": "prompt"
     }
   ],
-  "version": 1
+  "version": 2
 }
