@@ -1,4 +1,5 @@
 winget install JanDeDobbeleer.OhMyPosh
+winget install vim.vim
 
 #setup a temp dir to download some files like Hack font
 $winEnvBootstrapPath = Resolve-Path .
@@ -14,6 +15,9 @@ New-Item -Type Directory -Path $tempFolderPath | Out-Null
 Write-Host "Copy Powershell Profile to ~profile"
 New-Item -Path $profile -ItemType "file" -Force
 Copy-Item powershell-profile.ps1 $profile 
+
+Write-Host "Copy vimrc to ~"
+Copy-Item _vimrc ~ 
 
 Write-Host "Copy my oh-my-posh to home dir"
 Copy-Item microverse-power-modified.omp.json ~
