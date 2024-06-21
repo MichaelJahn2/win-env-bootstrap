@@ -97,12 +97,6 @@ function Install-Font {
 Write-Host "Copy vimrc to ~"
 Copy-Item _vimrc ~ 
 
-Write-Host "Copy Windows Terminal settings.json"
-Copy-Item WinTerminal.settings.json $env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json
-
-Write-Host "Copy my oh-my-posh to home dir"
-Copy-Item microverse-power-modified.omp.json ~
-
 New-Item -Type Directory -Path $tempFolderPath | Out-Null
 Write-Host "Download Hack Nerd Font to $tempFolderPath"
 Invoke-WebRequest -Uri "$hackNerdFontURL" -OutFile "$tempFolderPath\hack.zip"
@@ -112,10 +106,16 @@ Expand-Archive -LiteralPath "$tempFolderPath\hack.zip" -DestinationPath "$tempFo
 
 #Get a list of all font files relative to this script and parse through the list
 foreach ($FontItem in (Get-ChildItem -Path $tempFolderPath | Where-Object {
-			($_.Name -like '*Complete Windows Compatible*.ttf') -or ($_.Name -like '*.OTF')
+			($_.Name -like '*.ttf') -or ($_.Name -like '*.OTF')
 		})) {
 	Install-Font -FontFile $FontItem $false
 }
+
+Write-Host "Copy Windows Terminal settings.json"
+Copy-Item WinTerminal.settings.json $env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json
+
+Write-Host "Copy my oh-my-posh to home dir"
+Copy-Item microverse-power-modified.omp.json ~
 
 # Activate new Powershell profile after font installation
 Write-Host "Copy Powershell Profile to ~profile"
