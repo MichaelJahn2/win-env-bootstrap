@@ -3,34 +3,10 @@ winget install vim.vim
 
 #setup a temp dir to download some files like Hack font
 $winEnvBootstrapPath = Resolve-Path .
-$hackNerdFontURL = "https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Hack.zip"
+$hackNerdFontURL = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hack.zip"
 $tempFolderPath = Join-Path $Env:Temp $(New-Guid)
 
-New-Item -Type Directory -Path $tempFolderPath | Out-Null
-
-# welp. symbolic links require admin priviledges in Windows. Keeping this option for later.
-# so we stupidly just copy files instead of linking to the git directory
-#New-Item -ItemType SymbolicLink -path "$profile" -Target "$winEnvBootstrapPath\powershell-profile.ps1"
-
-Write-Host "Copy Powershell Profile to ~profile"
-New-Item -Path $profile -ItemType "file" -Force
-Copy-Item powershell-profile.ps1 $profile 
-
-Write-Host "Copy vimrc to ~"
-Copy-Item _vimrc ~ 
-
-Write-Host "Copy Windows Terminal settings.json"
-Copy-Item WinTerminal.settings.json $env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json
-
-Write-Host "Copy my oh-my-posh to home dir"
-Copy-Item microverse-power-modified.omp.json ~
-
-Write-Host "Download Hack Nerd Font to $tempFolderPath"
-Invoke-WebRequest -Uri "$hackNerdFontURL" -OutFile "$tempFolderPath\hack.zip"
-
-Write-Host "Extracting Hack Nerd Font files to $tempFolderPath"
-Expand-Archive -LiteralPath "$tempFolderPath\hack.zip" -DestinationPath "$tempFolderPath"
-
+#
 # taken from Mick IT Blog 
 # article: https://mickitblog.blogspot.com/2021/06/powershell-install-fonts.html
 # github repo: https://github.com/MicksITBlogs/PowerShell/blob/master/InstallFonts.ps1
@@ -113,6 +89,27 @@ function Install-Font {
 	Write-Host
 }
 
+# welp. symbolic links require admin priviledges in Windows. Keeping this option for later.
+# so we stupidly just copy files instead of linking to the git directory
+#New-Item -ItemType SymbolicLink -path "$profile" -Target "$winEnvBootstrapPath\powershell-profile.ps1"
+
+
+Write-Host "Copy vimrc to ~"
+Copy-Item _vimrc ~ 
+
+Write-Host "Copy Windows Terminal settings.json"
+Copy-Item WinTerminal.settings.json $env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json
+
+Write-Host "Copy my oh-my-posh to home dir"
+Copy-Item microverse-power-modified.omp.json ~
+
+New-Item -Type Directory -Path $tempFolderPath | Out-Null
+Write-Host "Download Hack Nerd Font to $tempFolderPath"
+Invoke-WebRequest -Uri "$hackNerdFontURL" -OutFile "$tempFolderPath\hack.zip"
+
+Write-Host "Extracting Hack Nerd Font files to $tempFolderPath"
+Expand-Archive -LiteralPath "$tempFolderPath\hack.zip" -DestinationPath "$tempFolderPath"
+
 #Get a list of all font files relative to this script and parse through the list
 foreach ($FontItem in (Get-ChildItem -Path $tempFolderPath | Where-Object {
 			($_.Name -like '*Complete Windows Compatible*.ttf') -or ($_.Name -like '*.OTF')
@@ -120,3 +117,7 @@ foreach ($FontItem in (Get-ChildItem -Path $tempFolderPath | Where-Object {
 	Install-Font -FontFile $FontItem $false
 }
 
+# Activate new Powershell profile after font installation
+Write-Host "Copy Powershell Profile to ~profile"
+New-Item -Path $profile -ItemType "file" -Force
+Copy-Item powershell-profile.ps1 $profile 
